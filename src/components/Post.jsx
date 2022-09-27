@@ -1,50 +1,80 @@
-import { Avatar } from './Avatar'
-import { Comment } from './Comment'
-import styles from './Post.module.css'
+import { format, formatDistanceToNow } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
+import { useState } from 'react';
 
-export function Post() {
-    return (
-        <article className={styles.post}>
-            <header>
-                <div className={styles.author}>
-                    <Avatar src="https://github.com/VictorMassarenti.png" />
-                    <div className={styles.authorInfo}>
-                        <strong>Victor Massarenti</strong>
-                        <span>Web Developer</span>
-                    </div>
-                </div>
+import { Avatar } from './Avatar';
+import { Comment } from './Comment';
 
-                <time title='11 de maio às 08:13h' dataTime='2022-05-11 08:13:30'>Publicado há 1h</time>
-            </header>
+import styles from './Post.module.css';
 
-            <div className={styles.content}>
-                <p>Fala galeraa 👋</p>
-                <p>Acabei de subir mais um projeto no meu portifa. É um projeto que fiz no NLW Return, evento da Rocketseat. O nome do projeto é DoctorCare 🚀</p>
-                <p>👉 <a href='#'>jane.design/doctorcare</a></p>
-                <p>
-                    <a href='#'>#novoprojeto</a>{' '}
-                    <a href='#'>#nlw</a>{' '}
-                    <a href='#'>#rocketseat</a>
-                </p>
-            </div>
+export function Post({ author, publishedAt, content }) {
+  const [comments, setComments] = useState([
+    'Muito bom, hein!?'
+  ]);
+  const [newCommentText, setNewCommentText] = useState('');
 
-            <form className={styles.commentForm}>
-                <strong>Deixe seu feedback</strong>
+  const publishedDateFormatted = format(publishedAt, "d 'de' LLLL 'às' HH:mm'h'", {
+    locale: ptBR,
+  });
+  const publishedDateRelativeToNow = formatDistanceToNow(publishedAt, {
+    locale: ptBR,
+    addSuffix: true
+  });
 
-                <textarea
-                    placeholder='Deixe um comentário'
-                />
-                <footer>
-                    <button type='submit'>Publicar</button>
-                </footer>
+  function handleCrateNewComment() {
+    event.preventDefault()
 
-            </form>
+    setComments([...comments, newCommentText]);
+    setNewCommentText('');
+  }
 
-            <div className={styles.commentList}>
-                <Comment />
-                <Comment />
-                <Comment />
-            </div>
-        </article>
-    )
+  function handleNewCommentChange() {
+    setNewCommentText(event.target.value);
+  }
+
+  return (
+    <article className={styles.post}>
+      <header>
+        <div className={styles.author}>
+          <Avatar src={author.avatarUrl} />
+          <div className={styles.authorInfo}>
+            <strong>{author.name}</strong>
+            <span>{author.role}</span>
+          </div>
+        </div>
+        <time title={publishedDateFormatted} dateTime={publishedAt.toISOString()}>
+          {publishedDateRelativeToNow}
+        </time>
+      </header>
+      <div className={styles.content}>
+        {content.map(line => {
+          if (line.type === 'paragraph') {
+            return <p key={line.content}>{line.content}</p>;
+          } else if (line.type === 'link') {
+            return <p key={line.content}><a href="#">{line.content}</a></p>
+          }
+        })}
+      </div>
+
+      <form onSubmit={handleCrateNewComment} className={styles.commentForm}>
+        <strong>Deixe seu feedback</strong>
+
+        <textarea
+          name="comment"
+          placeholder="Deixe um comentário"
+          value={newCommentText}
+          onChange={handleNewCommentChange}
+        />
+        <footer>
+          <button type="submit">Publicar</button>
+        </footer>
+      </form>
+
+      <div className={styles.commentList}>
+        {comments.map(comment => {
+          return <Comment key={comment} content={comment} />
+        })}
+      </div>
+    </article>
+  )
 }
